@@ -12,6 +12,8 @@ import os
 from potential_fields import meters2grid, grid2meters
 from low_pass_filter import butter_lowpass_filter
 import psutil
+import random
+import csv
 
 def memory_usage():
     # return the memory usage in MiB
@@ -100,7 +102,9 @@ def formation(num_robots, leader_des, v, l):
     geometry of the swarm: following robots desired locations
     relatively to the leader
     """
+    
     u = np.array([-v[1], v[0]])
+    
     """ followers positions """
     des2 = leader_des - v*l*sqrt(3)/2 + u*l/2
     des3 = leader_des - v*l*sqrt(3)/2 - u*l/2
@@ -110,6 +114,23 @@ def formation(num_robots, leader_des, v, l):
     des7 = leader_des - v*l*sqrt(3)*3/2 - u*l/2
     des8 = leader_des - v*l*sqrt(3)*3/2 + u*l/2
     des9 = leader_des - v*l*sqrt(3)*2
+    
+    """
+    Hyungsub: Implementing GPS spoofing
+    """
+    """
+    #GPS_spoofing = random.uniform(0, 1.5)
+    GPS_spoofing = random.uniform(0, 0.8)
+    des2 = des2 + GPS_spoofing
+    des3 = des3 + GPS_spoofing
+    des4 = des4 + GPS_spoofing
+    des5 = des5 + GPS_spoofing
+    des6 = des6 + GPS_spoofing
+    des7 = des7 + GPS_spoofing
+    des8 = des8 + GPS_spoofing
+    des9 = des9 + GPS_spoofing
+    """
+    
     if num_robots<=1: return []
     if num_robots==2: return [des4]
     if num_robots==3: return [des2, des3]
@@ -148,6 +169,8 @@ def path_length(pose_array):
     return length
 
 
+# Hyungsub: Flight data postprocessing
+
 def postprocessing(metrics, params, visualize=1):
     for robot in metrics.robots:
         robot.path_length = path_length(robot.route)
@@ -157,6 +180,7 @@ def postprocessing(metrics, params, visualize=1):
     print("\nCentroid path: %.2f [m]" %metrics.centroid_path_length)
     if visualize:
         plt.figure(figsize=(10,10))
+        # Hyungsub: Logging drones trajectories (we don't need to log this data)
         plt.title("Drones trajectories.")
         for robot in metrics.robots:
             plt.plot(robot.route[:,0], robot.route[:,1], '--', label='drone %d' %robot.id, linewidth=2)
@@ -172,6 +196,7 @@ def postprocessing(metrics, params, visualize=1):
         metrics.vels_max.append( np.max(np.array(robot.vel_array)) )
     if visualize:
         plt.figure(figsize=(10,6))
+        # Hyungsub: Logging robots velocities
         plt.title( "Robots Velocities" )
         plt.plot( metrics.t_array, metrics.robots[0].vel_array, '-', color='k', label='drone 1', linewidth=3)
         for r in range(1, len(metrics.robots)):
@@ -248,13 +273,15 @@ def postprocessing(metrics, params, visualize=1):
     metrics.memory_usage_mean = np.mean( metrics.memory_usage_array )
     print("\nMean CPU usage: %.2f [percentage]" %metrics.cpu_usage_mean)
     print("Mean memory usage: %.2f [MiB]" %metrics.memory_usage_mean)
-
+    
     if visualize:
         plt.figure(figsize=(10,6))
         l = params.interrobots_dist
+        # Hyungsub: Logging inter-robots distance
         plt.plot(metrics.t_array, l*np.ones_like(metrics.t_array), '--', label='Default distance', linewidth=2)
         plt.plot(metrics.t_array, metrics.mean_dists_array, label='Mean inter-robots distance', color='r', linewidth=2)
         plt.plot(metrics.t_array, metrics.max_dists_array, label='Max inter-robots distance', color='k', linewidth=2)
+
         plt.grid()
         plt.xlabel('Time, [s]')
         plt.ylabel('Distance, [m]')
@@ -333,9 +360,17 @@ def save_data(metrics, folder_name='output_%f'%time.time()):
             x, y = robot.route[i,:]
             ws.write(i+1,1, x); ws.write(i+1,2, y)
 
-        ws.write(0,3, 'V [m/s]')
+        ws.write(0,3, 'Velocity [m/s]')
         for i in range(len(robot.vel_array)):
             v = robot.vel_array[i]
             ws.write(i+1, 3, v)
+        
+        ws.write(0,4, 'Mean Dists [m]')
+        for i in range(len(metrics.mean_dists_array)):
+            ws.write(i+1,4, metrics.mean_dists_array[i])
+
+        ws.write(0,5, 'Max Dists [m]')
+        for i in range(len(metrics.max_dists_array)):
+            ws.write(i+1,5, metrics.max_dists_array[i])
 
         wb.save( metrics.folder_to_save+folder_name+'/robot%d.xls'%r  )

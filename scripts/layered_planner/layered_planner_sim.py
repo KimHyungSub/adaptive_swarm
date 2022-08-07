@@ -22,9 +22,9 @@ from matplotlib import cm
 
 def move_obstacles(obstacles, params):
     # small cubes movement
-    obstacles[-3] += np.array([0.015, 0.0]) * params.drone_vel
-    obstacles[-2] += np.array([-0.005, 0.005]) * params.drone_vel/2
-    obstacles[-1] += np.array([0.0, 0.008]) * params.drone_vel/2
+    obstacles[-3] += np.array([0.015, 0.0]) * params.drone_vel * 0
+    obstacles[-2] += np.array([-0.005, 0.005]) * params.drone_vel/2 * 0
+    obstacles[-1] += np.array([0.0, 0.008]) * params.drone_vel/2 * 0
     return obstacles
 
 class Params:
@@ -32,19 +32,19 @@ class Params:
         self.animate_rrt = 1 # show RRT construction, set 0 to reduce time of the RRT algorithm
         self.visualize = 1 # show robots movement
         self.postprocessing = 1 # process and visualize the simulated experiment data after the simulation
-        self.savedata = 0 # save postprocessing metrics to the XLS-file
+        self.savedata = 1 # save postprocessing metrics to the XLS-file
         self.maxiters = 500 # max number of samples to build the RRT
         self.goal_prob = 0.05 # with probability goal_prob, sample the goal
         self.minDistGoal = 0.25 # [m], min distance os samples from goal to add goal node to the RRT
         self.extension = 0.8 # [m], extension parameter: this controls how far the RRT extends in each step.
         self.world_bounds_x = [-2.5, 2.5] # [m], map size in X-direction
         self.world_bounds_y = [-2.5, 2.5] # [m], map size in Y-direction
-        self.drone_vel = 4.0 # [m/s]
+        self.drone_vel = 4.0 # [m/s] #default:4
         self.ViconRate = 100 # [Hz]
-        self.influence_radius = 0.15 # [m] potential fields radius, defining repulsive area size near the obstacle
+        self.influence_radius = 0.3 # [m] potential fields radius, defining repulsive area size near the obstacle #default:0.15
         self.goal_tolerance = 0.05 # [m], maximum distance threshold to reach the goal
-        self.num_robots = 4 # number of robots in the formation
-        self.interrobots_dist = 0.3 # [m], distance between robots in default formation
+        self.num_robots = 4 # number of robots in the formation #default:4
+        self.interrobots_dist = 0.3 # [m], distance between robots in default formation #default:0.3
         self.max_sp_dist = 0.2 * self.drone_vel# * np.sqrt(self.num_robots) # [m], maximum distance between current robot's pose and the sp from global planner
 
 class Robot:
@@ -154,7 +154,8 @@ class Metrics:
         self.cpu_usage_array = [] # [%]
         self.memory_usage_array = [] # [MiB]
 
-        self.folder_to_save = '/home/rus/Desktop/'
+        # Hyungsub: Change this path
+        self.folder_to_save = '/home/hskim/Desktop/RVProber/'
 
 metrics = Metrics()
 
@@ -258,5 +259,5 @@ if params.postprocessing:
 # close windows if Enter-button is pressed
 plt.draw()
 plt.pause(0.1)
-raw_input('Hit Enter to close')
+input('Hit Enter to close')
 plt.close('all')
